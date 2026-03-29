@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}SICK - 식수 체크인{% endblock %}</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['"Pretendard Variable"', 'Pretendard', '-apple-system', 'BlinkMacSystemFont', 'system-ui', 'Roboto', '"Helvetica Neue"', '"Segoe UI"', '"Apple SD Gothic Neo"', '"Noto Sans KR"', '"Malgun Gothic"', 'sans-serif'],
+                    },
+                    keyframes: {
+                        'fade-in-up': {
+                            '0%': { opacity: '0', transform: 'translateY(12px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'fade-in': {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' },
+                        },
+                        'slide-down': {
+                            '0%': { opacity: '0', transform: 'translateY(-8px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' },
+                        },
+                        'scale-in': {
+                            '0%': { opacity: '0', transform: 'scale(0.95)' },
+                            '100%': { opacity: '1', transform: 'scale(1)' },
+                        },
+                    },
+                    animation: {
+                        'fade-in-up': 'fade-in-up 0.4s ease-out',
+                        'fade-in': 'fade-in 0.3s ease-out',
+                        'slide-down': 'slide-down 0.3s ease-out',
+                        'scale-in': 'scale-in 0.2s ease-out',
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- Local Pretendard Font -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/main.css') }}">
+    <!-- Local Lucide Icons -->
+    <script src="{{ url_for('static', filename='lib/lucide/lucide.min.js') }}"></script>
+    <style>
+        .glass { background: rgba(255, 255, 255, 0.8); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+        .glass-dark { background: rgba(15, 23, 42, 0.95); backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); }
+
+        /* Smooth scroll */
+        html { scroll-behavior: smooth; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 3px; }
+        ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+        /* Safe area for mobile */
+        body { padding-bottom: env(safe-area-inset-bottom); }
+    </style>
+    {% block head %}{% endblock %}
+</head>
+<body class="bg-gradient-to-br from-slate-50 via-white to-blue-50/30 min-h-screen text-slate-900 font-sans antialiased">
+    {% if current_user.is_authenticated and not current_user.must_change_password %}
+    <!-- Desktop & Mobile Navigation -->
+    <nav class="sticky top-0 z-50 glass border-b border-slate-200/60 shadow-sm">
+        <div class="max-w-5xl mx-auto px-4 sm:px-6 h-14 sm:h-16 flex items-center justify-between">
+            <!-- Logo -->
+            <a href="{{ url_for('today_qr') }}" class="flex items-center gap-2 group shrink-0">
+                <div class="bg-blue-600 p-1.5 rounded-lg shadow-blue-200 shadow-lg group-hover:scale-110 transition-transform">
+                    <i data-lucide="utensils" class="w-4 h-4 sm:w-5 sm:h-5 text-white"></i>
+                </div>
+                <span class="text-lg sm:text-xl font-black tracking-tighter text-slate-800">SICK</span>
+            </a>
+
+            <!-- Desktop nav links -->
+            <div class="hidden md:flex items-center gap-6 text-sm font-semibold">
+                <a href="{{ url_for('today_qr') }}" class="flex items-center gap-1.5 px-3 py-2 rounded-xl {% if request.endpoint == 'today_qr' %}text-blue-600 bg-blue-50{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-50{% endif %} transition-all">
+                    <i data-lucide="qr-code" class="w-4 h-4"></i>
+                    오늘의 QR
+                </a>
+                <a href="{{ url_for('status') }}" class="flex items-center gap-1.5 px-3 py-2 rounded-xl {% if request.endpoint == 'status' %}text-blue-600 bg-blue-50{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-50{% endif %} transition-all">
+                    <i data-lucide="calendar-check" class="w-4 h-4"></i>
+                    내 현황
+                </a>
+                {% if current_user.is_admin or current_user.is_superadmin %}
+                <a href="{{ url_for('admin_dashboard') }}" class="flex items-center gap-1.5 px-3 py-2 rounded-xl {% if 'admin' in request.endpoint %}text-indigo-600 bg-indigo-50{% else %}text-slate-500 hover:text-slate-800 hover:bg-slate-50{% endif %} transition-all">
+                    <i data-lucide="shield-check" class="w-4 h-4"></i>
+                    관리자
+                </a>
+                {% endif %}
+            </div>
+
+            <!-- Right side: desktop only -->
+            <div class="hidden md:flex items-center gap-2 sm:gap-4">
+                <div class="flex items-center gap-2 text-sm bg-slate-100 px-3 py-1.5 rounded-full border border-slate-200/50">
+                    <i data-lucide="user" class="w-3.5 h-3.5 text-slate-400"></i>
+                    <span class="font-medium text-slate-600">{{ current_user.username }}</span>
+                </div>
+                <a href="{{ url_for('change_password') }}" class="text-slate-400 hover:text-blue-500 transition-colors p-2 rounded-xl hover:bg-blue-50" title="비밀번호 변경">
+                    <i data-lucide="key-round" class="w-4 h-4"></i>
+                </a>
+                <a href="{{ url_for('logout') }}" class="text-slate-400 hover:text-red-500 transition-colors p-2 rounded-xl hover:bg-red-50" title="로그아웃">
+                    <i data-lucide="log-out" class="w-5 h-5"></i>
+                </a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Mobile bottom tab bar -->
+    <nav class="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-slate-200 shadow-[0_-2px_10px_rgba(0,0,0,0.06)]" style="padding-bottom: env(safe-area-inset-bottom);">
+        <div class="grid grid-cols-{% if current_user.is_admin or current_user.is_superadmin %}5{% else %}4{% endif %} h-16">
+            <a href="{{ url_for('today_qr') }}" class="flex flex-col items-center justify-center gap-1 {% if request.endpoint == 'today_qr' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <i data-lucide="qr-code" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">QR</span>
+            </a>
+            <a href="{{ url_for('status') }}" class="flex flex-col items-center justify-center gap-1 {% if request.endpoint == 'status' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <i data-lucide="calendar-check" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">현황</span>
+            </a>
+            {% if current_user.is_admin or current_user.is_superadmin %}
+            <a href="{{ url_for('admin_dashboard') }}" class="flex flex-col items-center justify-center gap-1 {% if request.endpoint and 'admin' in request.endpoint %}text-indigo-600{% else %}text-slate-400{% endif %}">
+                <i data-lucide="shield-check" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">관리</span>
+            </a>
+            {% endif %}
+            <a href="{{ url_for('change_password') }}" class="flex flex-col items-center justify-center gap-1 {% if request.endpoint == 'change_password' %}text-blue-600{% else %}text-slate-400{% endif %}">
+                <i data-lucide="key-round" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">비밀번호</span>
+            </a>
+            <a href="{{ url_for('logout') }}" class="flex flex-col items-center justify-center gap-1 text-slate-400">
+                <i data-lucide="log-out" class="w-5 h-5"></i>
+                <span class="text-[10px] font-bold">로그아웃</span>
+            </a>
+        </div>
+    </nav>
+    {% endif %}
+
+    <main class="max-w-5xl mx-auto px-4 sm:px-6 py-6 sm:py-10 pb-24 md:pb-10">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+        <div class="space-y-3 mb-6 sm:mb-8">
+            {% for category, message in messages %}
+            <div class="p-3.5 sm:p-4 rounded-2xl flex items-center gap-3 border shadow-sm animate-fade-in-up
+                {% if category == 'error' %}bg-red-50 text-red-700 border-red-100
+                {% elif category == 'success' %}bg-emerald-50 text-emerald-700 border-emerald-100
+                {% else %}bg-blue-50 text-blue-700 border-blue-100{% endif %}">
+                <i data-lucide="{% if category == 'error' %}alert-circle{% elif category == 'success' %}check-circle-2{% else %}info{% endif %}" class="w-5 h-5 shrink-0"></i>
+                <span class="text-sm font-medium">{{ message }}</span>
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+        {% endwith %}
+
+        {% block content %}{% endblock %}
+    </main>
+
+    <script>
+        lucide.createIcons();
+    </script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

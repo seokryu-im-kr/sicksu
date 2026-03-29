@@ -1,0 +1,33 @@
+# Environment
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Database
+instance/
+*.db
+
+# Node
+node_modules/
+
+# Built files
+static/js/
+
+# Tailwind CLI binary
+static/lib/tailwindcss/tailwindcss
+
+# Gunicorn
+.gunicorn.pid
+
+# Claude
+.claude/
+CLAUDE.md
+
+# Gemini
+.gemini/
+GEMINI.md

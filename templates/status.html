@@ -1,0 +1,110 @@
+{% extends "base.html" %}
+{% block title %}내 현황 - SICK{% endblock %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto px-2 mt-4 sm:mt-10">
+    <div class="flex items-center justify-between mb-8 sm:mb-10 animate-fade-in">
+        <div>
+            <h1 class="text-2xl sm:text-3xl font-black text-slate-900 tracking-tight">내 체크인 현황</h1>
+            <p class="text-slate-400 font-medium mt-1 text-sm sm:text-base">지금까지의 식수 기록을 확인하세요.</p>
+        </div>
+        <div class="bg-emerald-50 p-3 sm:p-4 rounded-2xl sm:rounded-[2rem] shadow-inner shrink-0 ml-4">
+            <i data-lucide="calendar-check" class="w-6 h-6 sm:w-8 sm:h-8 text-emerald-600"></i>
+        </div>
+    </div>
+
+    <!-- Month filter -->
+    <div class="bg-white rounded-2xl sm:rounded-3xl shadow-lg shadow-slate-200/40 border border-slate-100 p-4 sm:p-6 mb-6 sm:mb-8 animate-fade-in-up">
+        <form method="GET" class="flex items-end gap-3">
+            <div class="flex-1 space-y-2">
+                <label class="text-xs font-black text-slate-400 uppercase tracking-widest ml-1">월별 조회</label>
+                <input type="month" name="month" value="{{ month_filter }}"
+                    class="w-full px-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 focus:bg-white outline-none transition-all text-sm font-bold">
+            </div>
+            <button type="submit" class="bg-blue-600 text-white px-5 py-3 rounded-2xl hover:bg-blue-700 active:scale-[0.98] transition-all font-black shadow-lg shadow-blue-200 text-sm">
+                검색
+            </button>
+            {% if month_filter %}
+            <a href="{{ url_for('status') }}" class="px-4 py-3 bg-slate-100 text-slate-500 rounded-2xl hover:bg-slate-200 active:bg-slate-300 transition-all text-sm font-bold">
+                초기화
+            </a>
+            {% endif %}
+        </form>
+    </div>
+
+    {% if checkins %}
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden mb-6 animate-fade-in-up">
+        <div class="px-5 sm:px-8 py-4 sm:py-5 border-b border-slate-50 bg-slate-50/30 flex items-center justify-between">
+            <span class="text-xs font-black text-slate-400 uppercase tracking-widest">기록 목록</span>
+            <span class="text-xs font-black text-slate-500 bg-white px-2.5 py-1 rounded-lg shadow-sm border border-slate-100">TOTAL {{ checkins|length }}</span>
+        </div>
+
+        <!-- Desktop table -->
+        <div class="hidden sm:block overflow-x-auto">
+            <table class="w-full text-left">
+                <thead>
+                    <tr class="border-b border-slate-50">
+                        <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">날짜</th>
+                        <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest">체크인 시간</th>
+                        <th class="px-8 py-4 text-xs font-black text-slate-400 uppercase tracking-widest text-right">상태</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-slate-50">
+                    {% for c in checkins %}
+                    <tr class="group hover:bg-slate-50/30 transition-colors">
+                        <td class="px-8 py-5">
+                            <div class="flex items-center gap-3">
+                                <div class="w-2 h-2 rounded-full bg-blue-500"></div>
+                                <span class="font-bold text-slate-700">{{ c.date }}</span>
+                            </div>
+                        </td>
+                        <td class="px-8 py-5 text-sm font-black text-slate-900">
+                            {{ c.created_at.strftime('%H:%M:%S') if c.created_at else '-' }}
+                        </td>
+                        <td class="px-8 py-5 text-right">
+                            <span class="inline-flex items-center gap-1.5 bg-emerald-50 text-emerald-600 px-3 py-1 rounded-full text-[10px] font-black tracking-widest ring-1 ring-inset ring-emerald-600/10 uppercase">
+                                COMPLETED
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Mobile card list -->
+        <div class="sm:hidden divide-y divide-slate-50">
+            {% for c in checkins %}
+            <div class="px-5 py-4 flex items-center justify-between">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center shrink-0">
+                        <i data-lucide="calendar" class="w-4 h-4 text-blue-500"></i>
+                    </div>
+                    <div>
+                        <p class="font-bold text-slate-800 text-sm">{{ c.date }}</p>
+                        <p class="text-xs text-slate-400 font-medium mt-0.5">{{ c.created_at.strftime('%H:%M:%S') if c.created_at else '-' }}</p>
+                    </div>
+                </div>
+                <span class="inline-flex items-center bg-emerald-50 text-emerald-600 px-2.5 py-1 rounded-full text-[10px] font-black tracking-wider ring-1 ring-inset ring-emerald-600/10 uppercase shrink-0">
+                    <i data-lucide="check" class="w-3 h-3 mr-1"></i>
+                    완료
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% else %}
+    <div class="bg-white rounded-3xl shadow-xl shadow-slate-200/50 border border-slate-100 p-12 sm:p-16 text-center animate-fade-in-up">
+        <div class="bg-slate-50 w-20 h-20 sm:w-24 sm:h-24 rounded-full flex items-center justify-center mx-auto mb-6">
+            <i data-lucide="clipboard-list" class="w-10 h-10 sm:w-12 sm:h-12 text-slate-200"></i>
+        </div>
+        <h3 class="text-lg sm:text-xl font-black text-slate-800 mb-2">기록이 없습니다</h3>
+        <p class="text-slate-400 font-medium text-sm">아직 체크인한 기록이 보이지 않네요.</p>
+        <a href="{{ url_for('today_qr') }}" class="inline-flex items-center gap-2 mt-6 sm:mt-8 text-blue-600 font-bold hover:underline text-sm">
+            QR코드 발급받기
+            <i data-lucide="arrow-right" class="w-4 h-4"></i>
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

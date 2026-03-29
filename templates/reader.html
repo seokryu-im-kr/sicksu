@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block title %}QR 리더 - SICK{% endblock %}
+
+{% block head %}
+<script src="{{ url_for('static', filename='lib/html5-qrcode/html5-qrcode.min.js') }}"></script>
+<style>
+    #qr-reader video {
+        border-radius: 1rem !important;
+        object-fit: cover !important;
+    }
+    #qr-reader { border: none !important; background: transparent !important; }
+    #qr-reader img { display: none !important; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="max-w-lg mx-auto px-2 mt-2 sm:mt-8">
+    <div class="text-center mb-4 sm:mb-6">
+        <h1 class="text-2xl sm:text-3xl font-black text-slate-900 mb-1">식수 QR 리더</h1>
+        <p class="text-slate-400 font-medium text-sm">스캐너에 QR코드를 보여주세요</p>
+    </div>
+
+    <div id="qr-reader" class="rounded-2xl overflow-hidden mb-4" style="width:100%;"></div>
+
+    <div id="result-box" style="display:none; padding:16px; border-radius:16px; text-align:center; margin-bottom:12px; font-weight:800; font-size:16px;"></div>
+
+    <div id="status-box" style="padding:12px; border-radius:12px; text-align:center; background:#f1f5f9; color:#64748b; font-size:13px; font-weight:700;">
+        카메라 초기화 중...
+    </div>
+
+    <button id="switch-btn" onclick="doSwitch()" style="display:none; margin-top:12px; width:100%; padding:12px; border-radius:12px; background:#334155; color:white; font-weight:700; font-size:14px; border:none; cursor:pointer;">
+        카메라 전환
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+var scanner = null;
+var busy = false;
+var timer = null;
+var frontCam = false;
+
+function showStatus(msg) {
+    document.getElementById("status-box").textContent = msg;
+}
+
+function showResult(type, msg) {
+    var box = document.getElementById("result-box");
+    box.textContent = msg;
+    box.style.display = "block";
+    if (type === "success") {
+        box.style.background = "#10b981";
+        box.style.color = "white";
+    } else if (type === "duplicate") {
+        box.style.background = "#f59e0b";
+        box.style.color = "white";
+    } else {
+        box.style.background = "#ef4444";
+        box.style.color = "white";
+    }
+    if (timer) clearTimeout(timer);
+    timer = setTimeout(function() {
+        box.style.display = "none";
+        busy = false;
+        showStatus("스캔 대기 중...");
+    }, 1500);
+}
+
+function onScan(text) {
+    if (busy) return;
+    busy = true;
+    if (navigator.vibrate) navigator.vibrate(200);
+    showStatus("서버 확인 중...");
+
+    var xhr = new XMLHttpRequest();
+    xhr.open("POST", "/api/checkin");
+    xhr.setRequestHeader("Content-Type", "application/json");
+    xhr.onload = function() {
+        try {
+            var data = JSON.parse(xhr.responseText);
+            showResult(data.status, data.message);
+        } catch(e) {
+            showResult("fail", "응답 오류");
+        }
+    };
+    xhr.onerror = function() {
+        showResult("fail", "서버 통신 실패");
+    };
+    xhr.send(JSON.stringify({ qr_data: text }));
+}
+
+function startCam() {
+    if (!scanner) scanner = new Html5Qrcode("qr-reader");
+    var mode = frontCam ? "user" : "environment";
+    scanner.start(
+        { facingMode: mode },
+        { fps: 10, qrbox: { width: 250, height: 250 } },
+        onScan,
+        function() {}
+    ).then(function() {
+        showStatus((frontCam ? "전면" : "후면") + " 카메라 — 스캔 대기 중");
+    }).catch(function(err) {
+        showStatus("카메라 실패: " + err);
+    });
+}
+
+function doSwitch() {
+    if (!scanner) return;
+    scanner.stop().then(function() {
+        frontCam = !frontCam;
+        startCam();
+    }).catch(function() {
+        frontCam = !frontCam;
+        startCam();
+    });
+}
+
+// init
+try {
+    Html5Qrcode.getCameras().then(function(cams) {
+        if (cams.length > 1) {
+            document.getElementById("switch-btn").style.display = "block";
+        }
+        startCam();
+    }).catch(function() {
+        startCam();
+    });
+} catch(e) {
+    startCam();
+}
+</script>
+{% endblock %}
